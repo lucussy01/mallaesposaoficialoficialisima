@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UCH - Ingeniería Civil Industrial 2021</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .semester {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      width: 280px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    .semester h2 {
+      text-align: center;
+      font-size: 1.2em;
+      color: #003366;
+      margin-bottom: 10px;
+    }
+    .course {
+      background: #eee;
+      border-radius: 5px;
+      padding: 8px;
+      margin: 5px 0;
+      cursor: pointer;
+      position: relative;
+    }
+    .course.locked {
+      background: #f8c4d9;
+      cursor: not-allowed;
+    }
+    .course.approved {
+      background: #a7d8f0;
+    }
+    .course[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: -25px;
+      left: 0;
+      background: #333;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      white-space: pre-wrap;
+      z-index: 100;
+    }
+    #creditCounter {
+      text-align: center;
+      font-weight: bold;
+      color: #003366;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>UCH - Ingeniería Civil Industrial 2021</h1>
+  <div id="creditCounter">Créditos aprobados: 0</div>
+  <div class="container" id="grid"></div>
+
+  <script>
+    const semesters = [
+      { title: 'I', courses: [
+        { code: 'MA1001', name: 'INTRODUCCIÓN AL CÁLCULO', credits: 6 },
+        { code: 'MA1101', name: 'INTRODUCCIÓN AL ÁLGEBRA', credits: 6 },
+        { code: 'FI1000', name: 'INTRODUCCIÓN A LA FÍSICA CLÁSICA', credits: 6 },
+        { code: 'CC1000', name: 'HERRAMIENTAS COMPUTACIONALES', credits: 3 },
+        { code: 'CD1100', name: 'DESAFÍOS DE INNOVACIÓN', credits: 6 },
+        { code: 'BT1211', name: 'BIOLOGÍA PARA INGENIERÍA', credits: 3 },
+      ]},
+      { title: 'II', courses: [
+        { code: 'MA1002', name: 'CÁLCULO DIFERENCIAL E INTEGRAL', credits: 6, reqs: ['MA1001'] },
+        { code: 'MA1102', name: 'ÁLGEBRA LINEAL', credits: 6, reqs: ['MA1101'] },
+        { code: 'FI1100', name: 'FÍSICA MODERNA', credits: 6, reqs: ['FI1000'] },
+        { code: 'CC1002', name: 'INTRODUCCIÓN A LA PROGRAMACIÓN', credits: 6 },
+        { code: 'CD1201', name: 'PROYECTO DE INNOVACIÓN', credits: 3, reqs: ['CD1100'] },
+        { code: 'FG1', name: 'FORMACIÓN GENERAL I', credits: 3 },
+      ]},
+      { title: 'III', courses: [
+        { code: 'MA2001', name: 'CÁLCULO EN VARIAS VARIABLES', credits: 6, reqs: ['MA1002'] },
+        { code: 'MA2601', name: 'ECUACIONES DIFERENCIALES', credits: 6, reqs: ['MA1002'] },
+        { code: 'FI2003', name: 'MÉTODOS EXPERIMENTALES', credits: 6, reqs: ['FI1100'] },
+        { code: 'FI2001', name: 'MECÁNICA', credits: 6, reqs: ['FI1100'] },
+        { code: 'IQ2211', name: 'QUÍMICA', credits: 6 },
+      ]},
+      { title: 'IV', courses: [
+        { code: 'IN2201', name: 'ECONOMÍA', credits: 6 },
+        { code: 'MA2002', name: 'CÁLCULO AVANZADO Y APLICACIONES', credits: 6, reqs: ['MA2001'] },
+        { code: 'FI2002', name: 'ELECTROMAGNETISMO', credits: 6, reqs: ['FI2001'] },
+        { code: 'FI2004', name: 'TERMODINÁMICA', credits: 6, reqs: ['FI2001'] },
+        { code: 'CD2201', name: 'MÓDULO INTERDISCIPLINARIO', credits: 3 },
+        { code: 'FG2', name: 'FORMACIÓN GENERAL II', credits: 3 },
+      ]},
+      { title: 'V', courses: [
+        { code: 'IN3171', name: 'MODELAMIENTO Y OPTIMIZACIÓN', credits: 6 },
+        { code: 'IN3101', name: 'TALLER DE LIDERAZGO E INNOVACIÓN', credits: 6 },
+        { code: 'IN3141', name: 'PROBABILIDADES', credits: 6 },
+        { code: 'EL1', name: 'ELECTIVO', credits: 6 },
+        { code: 'FI1', name: 'FORMACIÓN INTEGRAL', credits: 6 },
+      ]},
+      { title: 'VI', courses: [
+        { code: 'IN3272', name: 'DECISIONES BAJO INCERTIDUMBRE', credits: 6 },
+        { code: 'IN3221', name: 'TEORÍA DE JUEGOS Y ESTRATEGIA', credits: 6 },
+        { code: 'IN3242', name: 'ESTADÍSTICA', credits: 6 },
+        { code: 'IN3301', name: 'EVALUACIÓN DE PROYECTOS', credits: 6 },
+        { code: 'EL2', name: 'ELECTIVO II', credits: 6 },
+      ]},
+      { title: 'VII', courses: [
+        { code: 'IN4102', name: 'TALLER CONCEPCIÓN Y DISEÑO', credits: 6 },
+        { code: 'IN4123', name: 'MACROECONOMÍA', credits: 6 },
+        { code: 'IN4143', name: 'ANÁLISIS DE DATOS', credits: 6 },
+        { code: 'IN4151', name: 'INGENIERÍA DE LA INFORMACIÓN', credits: 6 },
+        { code: 'EL3', name: 'ELECTIVO III', credits: 6 },
+        { code: 'IN4191', name: 'PRÁCTICA PROFESIONAL', credits: 7 },
+      ]},
+      { title: 'VIII', courses: [
+        { code: 'IN4273', name: 'GESTIÓN DE OPERACIONES', credits: 6 },
+        { code: 'IN4261', name: 'MARKETING', credits: 6 },
+        { code: 'IN4232', name: 'FINANZAS', credits: 6 },
+        { code: 'EL4', name: 'ELECTIVOS IV-V', credits: 12 },
+        { code: 'EI1090', name: 'EXAMEN INGLÉS I', credits: 0 },
+      ]},
+      { title: 'IX', courses: [
+        { code: 'ESP1', name: 'ESPECIALIZACIÓN I', credits: 12 },
+        { code: 'IN5112', name: 'DIRECCIÓN ESTRATÉGICA', credits: 6 },
+        { code: 'IN5111', name: 'COMPORTAMIENTO ORGANIZACIONAL', credits: 6 },
+        { code: 'EL5', name: 'ELECTIVO DE ESPECIALIDAD', credits: 6 },
+      ]},
+      { title: 'X', courses: [
+        { code: 'ESP2', name: 'ESPECIALIZACIÓN II', credits: 12 },
+        { code: 'EL6', name: 'ELECTIVOS DE ESPECIALIDAD', credits: 18 },
+      ]},
+      { title: 'XI', courses: [
+        { code: 'IN6193', name: 'PROYECTO DE TÍTULO', credits: 15 },
+        { code: 'IN6192', name: 'PRÁCTICA PROFESIONAL EXTENDIDA', credits: 15 },
+        { code: 'EI2090', name: 'EXAMEN INGLÉS II', credits: 0 },
+      ]},
+    ];
+
+    const container = document.getElementById("grid");
+    const creditCounter = document.getElementById("creditCounter");
+
+    let approved = JSON.parse(localStorage.getItem("approvedCourses") || "[]");
+
+    function updateCredits() {
+      const total = approved.reduce((sum, code) => {
+        for (let sem of semesters) {
+          for (let c of sem.courses) {
+            if (c.code === code) return sum + c.credits;
+          }
+        }
+        return sum;
+      }, 0);
+      creditCounter.textContent = "Créditos aprobados: " + total;
+    }
+
+    function render() {
+      container.innerHTML = "";
+      for (let i = 0; i < semesters.length; i += 2) {
+        const row = document.createElement("div");
+        row.className = "row";
+        [semesters[i], semesters[i+1]].forEach(sem => {
+          if (!sem) return;
+          const box = document.createElement("div");
+          box.className = "semester";
+          box.innerHTML = `<h2>Semestre ${sem.title}</h2>`;
+          sem.courses.forEach(course => {
+            const div = document.createElement("div");
+            div.className = "course";
+            div.textContent = `${course.name} (${course.credits} cr)`;
+            if (approved.includes(course.code)) {
+              div.classList.add("approved");
+            } else if (course.reqs && !course.reqs.every(r => approved.includes(r))) {
+              div.classList.add("locked");
+              const missing = course.reqs.filter(r => !approved.includes(r)).join(", ");
+              div.dataset.tooltip = `Faltan: ${missing}`;
+            }
+            div.onclick = () => {
+              if (div.classList.contains("locked")) return;
+              if (div.classList.contains("approved")) {
+                approved = approved.filter(c => c !== course.code);
+              } else {
+                approved.push(course.code);
+              }
+              localStorage.setItem("approvedCourses", JSON.stringify(approved));
+              render();
+              updateCredits();
+            };
+            box.appendChild(div);
+          });
+          row.appendChild(box);
+        });
+        container.appendChild(row);
+      }
+    }
+
+    render();
+    updateCredits();
+  </script>
+</body>
+</html>
